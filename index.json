@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-31T19:54:27Z",
+  "generated_at": "2026-10-31T19:54:29Z",
   "sensors": {
     "file-canary": {
       "latest": "1.0.0",
@@ -34,6 +34,15 @@
       "versions": {
         "1.0.0": {
           "manifest": "sensors/tcp-tarpit/1.0.0/manifest.json",
+          "deprecated": false
+        }
+      }
+    },
+    "web-router-decoy": {
+      "latest": "1.0.0",
+      "versions": {
+        "1.0.0": {
+          "manifest": "sensors/web-router-decoy/1.0.0/manifest.json",
           "deprecated": false
         }
       }

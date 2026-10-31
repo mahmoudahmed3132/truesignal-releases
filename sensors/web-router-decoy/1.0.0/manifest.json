@@ -1,0 +1,130 @@
+{
+  "schema_version": 3,
+  "name": "web-router-decoy",
+  "display_name": "Web router decoy",
+  "version": "1.0.0",
+  "description": "Serves a fake router/device admin login page and reports page views, path probes and every login attempt. Logins always fail.",
+  "category": "web",
+  "author": "TrueSignal",
+  "documentation": "Runs unprivileged (UID 65532, no capabilities) on port 8080 inside a bridge-networked container; the Hub publishes host port TS_PORT (e.g. 80) to it. Passwords are reported as an HMAC with the node's capture key by default (TS_PASSWORD_CAPTURE=hash), which still lets the Hub detect honeytoken credentials without storing plaintext; 'plain' reports them in clear. Source IPs are preserved with Docker's default iptables port publishing; with the userland proxy they appear as the Docker gateway.",
+  "image": {
+    "repository": "ghcr.io/mahmoudahmed3132/ts-sensor-web-router-decoy",
+    "tag": "1.0.0",
+    "digest": "sha256:d51a78e1c9cb266e34e4a4b11acacba6766ffcd5f6b0d5d13602fe4767dbfd93",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "runtime": {
+    "network_mode": "bridge",
+    "memory_mb": 128,
+    "listen_ports": [
+      {
+        "config_key": "TS_PORT",
+        "protocol": "tcp",
+        "container_port": 8080
+      }
+    ]
+  },
+  "config": [
+    {
+      "name": "TS_PORT",
+      "type": "port",
+      "default": "8080",
+      "description": "Host port the decoy appears on"
+    },
+    {
+      "name": "TS_SKIN",
+      "type": "string",
+      "default": "generic",
+      "description": "Device skin to impersonate",
+      "validation": {
+        "pattern": "[a-z0-9-]{1,40}"
+      }
+    },
+    {
+      "name": "TS_PASSWORD_CAPTURE",
+      "type": "enum",
+      "default": "hash",
+      "description": "hash: HMAC with the node capture key; plain: clear text; none: not captured",
+      "validation": {
+        "enum": [
+          "hash",
+          "plain",
+          "none"
+        ]
+      }
+    },
+    {
+      "name": "TS_CAPTURE_KEY",
+      "type": "string",
+      "hub_reserved": true,
+      "description": "Per-node capture hash key"
+    },
+    {
+      "name": "TS_PAGEVIEW_WINDOW_SEC",
+      "type": "int",
+      "default": "300",
+      "description": "One page-view event per source per window",
+      "validation": {
+        "min": 0,
+        "max": 86400
+      }
+    },
+    {
+      "name": "TS_PROBE_COOLDOWN_SEC",
+      "type": "int",
+      "default": "10",
+      "description": "Minimum seconds between path-probe events per source",
+      "validation": {
+        "min": 0,
+        "max": 86400
+      }
+    },
+    {
+      "name": "TS_LOGIN_COOLDOWN_SEC",
+      "type": "int",
+      "default": "0",
+      "description": "Minimum seconds between login events per source (0 = report every attempt)",
+      "validation": {
+        "min": 0,
+        "max": 86400
+      }
+    }
+  ],
+  "discovery": {
+    "process_names": [
+      "nginx",
+      "httpd",
+      "lighttpd",
+      "apache2"
+    ],
+    "listening_ports": [
+      80,
+      443
+    ],
+    "defaults": {
+      "TS_PORT": "free_port(8080)"
+    }
+  },
+  "triggers": [
+    {
+      "name": "web_page_view",
+      "default_severity": "low",
+      "description": "First page view of the login portal by a source in the window"
+    },
+    {
+      "name": "web_path_probe",
+      "default_severity": "medium",
+      "description": "Request for a path that does not exist (scanning, exploit attempts)"
+    },
+    {
+      "name": "web_login_attempt",
+      "default_severity": "critical",
+      "description": "Login attempt (form or HTTP basic auth)"
+    }
+  ],
+  "compatibility": {
+    "hub_major": 3
+  }
+}
