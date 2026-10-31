@@ -1,0 +1,103 @@
+{
+  "schema_version": 3,
+  "name": "network-scan-detector",
+  "display_name": "Network scan detector",
+  "version": "1.0.0",
+  "description": "Passively watches inbound packets and reports sources that probe many distinct ports in a short window (SYN, FIN, NULL, Xmas, connect and UDP scans).",
+  "category": "network",
+  "author": "TrueSignal",
+  "documentation": "Captures inbound frames with an AF_PACKET socket (headers only, never payloads). Runs as UID 0 with every capability dropped except NET_RAW, host network, read-only filesystem, no-new-privileges. Only TCP segments without ACK/RST and UDP datagrams count, so established traffic never looks like a scan. Tool guesses (nmap, masscan, zmap) come from public SYN fingerprints and are left empty when not confident. CPU cost grows with inbound packet rate: every inbound frame is read in user space.",
+  "image": {
+    "repository": "ghcr.io/mahmoudahmed3132/ts-sensor-network-scan-detector",
+    "tag": "1.0.0",
+    "digest": "sha256:333323b3df8d660dba674bb889f6d2dc47768986894e1698f439a0e6d373e68c",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "runtime": {
+    "user": "0:0",
+    "network_mode": "host",
+    "cap_add": [
+      "NET_RAW"
+    ],
+    "memory_mb": 128
+  },
+  "config": [
+    {
+      "name": "TS_THRESHOLD",
+      "type": "int",
+      "default": "10",
+      "description": "Distinct destination ports from one source that count as a scan",
+      "validation": {
+        "min": 2,
+        "max": 1024
+      }
+    },
+    {
+      "name": "TS_WINDOW_SEC",
+      "type": "int",
+      "default": "60",
+      "description": "Sliding window in seconds",
+      "validation": {
+        "min": 1,
+        "max": 3600
+      }
+    },
+    {
+      "name": "TS_IGNORED_PORTS",
+      "type": "list",
+      "item_type": "port",
+      "description": "Destination ports never counted (e.g. busy services)",
+      "validation": {
+        "max_items": 64
+      }
+    },
+    {
+      "name": "TS_IGNORE_LOOPBACK",
+      "type": "bool",
+      "default": "true",
+      "description": "Ignore traffic on the loopback interface"
+    },
+    {
+      "name": "TS_MAX_SOURCES",
+      "type": "int",
+      "default": "4096",
+      "description": "Sources tracked at once (least recently seen are evicted)",
+      "validation": {
+        "min": 16,
+        "max": 1048576
+      }
+    },
+    {
+      "name": "TS_DEFAULT_SEVERITY",
+      "type": "enum",
+      "default": "high",
+      "description": "Default severity",
+      "validation": {
+        "enum": [
+          "info",
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      }
+    }
+  ],
+  "discovery": {
+    "files": [
+      "/proc/net/dev"
+    ]
+  },
+  "triggers": [
+    {
+      "name": "network_scan_detected",
+      "default_severity": "high",
+      "description": "A source probed at least TS_THRESHOLD distinct ports within TS_WINDOW_SEC"
+    }
+  ],
+  "compatibility": {
+    "hub_major": 3
+  }
+}

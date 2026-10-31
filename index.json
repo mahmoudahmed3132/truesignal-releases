@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-31T19:54:25Z",
+  "generated_at": "2026-10-31T19:54:27Z",
   "sensors": {
     "file-canary": {
       "latest": "1.0.0",
@@ -16,6 +16,15 @@
       "versions": {
         "1.0.0": {
           "manifest": "sensors/icmp-canary/1.0.0/manifest.json",
+          "deprecated": false
+        }
+      }
+    },
+    "network-scan-detector": {
+      "latest": "1.0.0",
+      "versions": {
+        "1.0.0": {
+          "manifest": "sensors/network-scan-detector/1.0.0/manifest.json",
           "deprecated": false
         }
       }
