@@ -1,0 +1,113 @@
+{
+  "schema_version": 3,
+  "name": "file-canary",
+  "display_name": "File canary",
+  "version": "1.0.0",
+  "description": "Plants realistic lure files containing a honeytoken credential and reports every open, read, change, rename or deletion of them.",
+  "category": "host",
+  "author": "TrueSignal",
+  "documentation": "An init container without network creates missing lures (never overwriting existing files, never following symlinks); the sensor then watches the lure directories read-only with inotify, so deleted and recreated lures stay covered. Both run as UID 0 with every capability dropped except DAC_OVERRIDE (to reach lure directories owned by other users); the sensor's mounts are read-only. The sensor cannot see which process touched a lure (source is 'local'): correlate with EDR telemetry for the same host and time. Lure directories must exist before deploying.",
+  "image": {
+    "repository": "ghcr.io/mahmoudahmed3132/ts-sensor-file-canary",
+    "tag": "1.0.0",
+    "digest": "sha256:946e8edfea706db304b1eb17284c2f618bcfc98cc534f28fd5632009b74d712b",
+    "platforms": [
+      "linux/amd64"
+    ]
+  },
+  "runtime": {
+    "user": "0:0",
+    "network_mode": "bridge",
+    "cap_add": [
+      "DAC_OVERRIDE"
+    ],
+    "memory_mb": 64,
+    "host_paths": [
+      {
+        "config_key": "TS_LURES",
+        "mount": "parent",
+        "read_only": true
+      }
+    ]
+  },
+  "init": {
+    "image": {
+      "repository": "ghcr.io/mahmoudahmed3132/ts-sensor-file-canary",
+      "tag": "1.0.0",
+      "digest": "sha256:946e8edfea706db304b1eb17284c2f618bcfc98cc534f28fd5632009b74d712b",
+      "platforms": [
+        "linux/amd64"
+      ]
+    },
+    "command": [
+      "/sensor",
+      "init"
+    ],
+    "cap_add": [
+      "DAC_OVERRIDE"
+    ],
+    "writable_host_paths": [
+      "TS_LURES"
+    ],
+    "user": "0:0"
+  },
+  "config": [
+    {
+      "name": "TS_LURES",
+      "type": "list",
+      "item_type": "path",
+      "required": true,
+      "description": "Absolute paths of lure files to plant and watch (their directories must exist)",
+      "validation": {
+        "max_items": 32
+      }
+    },
+    {
+      "name": "TS_HONEYTOKEN",
+      "type": "string",
+      "hub_reserved": true,
+      "description": "Honeytoken credential issued by the Hub"
+    },
+    {
+      "name": "TS_ACCESS_ALERTS",
+      "type": "bool",
+      "default": "true",
+      "description": "Report opens and reads (not only tampering)"
+    },
+    {
+      "name": "TS_ACCESS_COOLDOWN_SEC",
+      "type": "int",
+      "default": "60",
+      "description": "Minimum seconds between access events per lure",
+      "validation": {
+        "min": 0,
+        "max": 86400
+      }
+    },
+    {
+      "name": "TS_TAMPER_COOLDOWN_SEC",
+      "type": "int",
+      "default": "1",
+      "description": "Minimum seconds between tamper events per lure and action",
+      "validation": {
+        "min": 0,
+        "max": 86400
+      }
+    }
+  ],
+  "triggers": [
+    {
+      "name": "decoy_file_accessed",
+      "default_severity": "high",
+      "description": "A lure file was opened or read"
+    },
+    {
+      "name": "decoy_file_tampered",
+      "default_severity": "critical",
+      "description": "A lure file was modified, renamed, deleted or had its attributes changed"
+    }
+  ],
+  "compatibility": {
+    "hub_major": 3
+  }
+}
